@@ -254,7 +254,7 @@ public class NiceSpinner<T> extends Text implements Component.TouchEventListener
                         Integer.valueOf(hex.substring(4, 6), 16),
                         Integer.valueOf(hex.substring(6, 8), 16));
             default:
-                return null;
+                return new RgbColor(255,255,255,255);
         }
     }
 

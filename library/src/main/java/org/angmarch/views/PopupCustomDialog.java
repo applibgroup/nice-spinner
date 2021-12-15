@@ -62,7 +62,7 @@ public class PopupCustomDialog extends PopupDialog implements Component.ClickedL
                         Integer.valueOf(hex.substring(4, 6), 16),
                         Integer.valueOf(hex.substring(6, 8), 16));
             default:
-                return null;
+                return new RgbColor(255,255,255,255);
         }
 
     }
@@ -72,9 +72,9 @@ public class PopupCustomDialog extends PopupDialog implements Component.ClickedL
 
         if (listContainer != null && builder.baseItemProvider == null) {
             builder.baseItemProvider = new NiceSpinnerAdapterWrapper( this,builder.getContext(),builder.textColor, builder.backgroundSelecorElement, builder.spinnerTextFormatter,  builder.horizontalTextAlignment, builder.popupPaddingBottom);
+            listContainer.enableScrollBar(Component.VERTICAL,true);
+            listContainer.setScrollbarColor(Color.DKGRAY);
         }
-        listContainer.enableScrollBar(Component.VERTICAL,true);
-        listContainer.setScrollbarColor(Color.DKGRAY);
         invalidateList();
     }
 
