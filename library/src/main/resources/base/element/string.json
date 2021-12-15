@@ -1,0 +1,13 @@
+{
+  "string": [
+    {
+      "name": "app_name",
+      "value": "MaterialSpinner"
+    },
+    {
+      "name": "mainability_description",
+      "value": "hap sample empty page"
+    }
+
+  ]
+}

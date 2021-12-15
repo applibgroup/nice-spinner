@@ -1,14 +1,10 @@
 package org.angmarch.views;
 
-import android.content.Context;
-import android.os.Build;
-import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
-import android.view.Gravity;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.BaseAdapter;
-import android.widget.TextView;
+import ohos.agp.components.*;
+import ohos.agp.components.element.ElementScatter;
+import ohos.agp.utils.Color;
+import ohos.agp.utils.TextAlignment;
+import ohos.app.Context;
 
 /*
  * Copyright (C) 2015 Angelo Marchesin.
@@ -26,66 +22,102 @@ import android.widget.TextView;
  * limitations under the License.
  */
 @SuppressWarnings("unused")
-public abstract class NiceSpinnerBaseAdapter<T> extends BaseAdapter {
+public abstract class NiceSpinnerBaseAdapter<T> extends BaseItemProvider {
 
     private final PopUpTextAlignment horizontalAlignment;
     private final SpinnerTextFormatter spinnerTextFormatter;
 
-    private int textColor;
+    private Color textColor;
     private int backgroundSelector;
 
     int selectedIndex;
+    private Context context;
 
-    NiceSpinnerBaseAdapter(
+    private PopupCustomDialog mDialog;
+    private NiceSpinnerAdapterWrapper.InternalListCallback mCallback;
+    private int popupBottomPadding;
+
+    NiceSpinnerBaseAdapter(PopupCustomDialog dialog,
             Context context,
-            int textColor,
+            Color textColor,
             int backgroundSelector,
             SpinnerTextFormatter spinnerTextFormatter,
-            PopUpTextAlignment horizontalAlignment
+            PopUpTextAlignment horizontalAlignment,
+                           int popupBottomPadding
     ) {
         this.spinnerTextFormatter = spinnerTextFormatter;
+        mDialog = dialog;
+        this.context = context;
         this.backgroundSelector = backgroundSelector;
         this.textColor = textColor;
         this.horizontalAlignment = horizontalAlignment;
+        this.popupBottomPadding = popupBottomPadding;
     }
+
 
     @Override
-    public View getView(int position, @Nullable View convertView, ViewGroup parent) {
-        Context context = parent.getContext();
-        TextView textView;
-
-        if (convertView == null) {
-            convertView = View.inflate(context, R.layout.spinner_list_item, null);
-            textView = convertView.findViewById(R.id.text_view_spinner);
-
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
-                textView.setBackground(ContextCompat.getDrawable(context, backgroundSelector));
-            }
-            convertView.setTag(new ViewHolder(textView));
-        } else {
-            textView = ((ViewHolder) convertView.getTag()).textView;
+    public Component getComponent(int position, Component component, ComponentContainer componentContainer) {
+        if (component == null) {
+            component = LayoutScatter.getInstance(context).parse(ResourceTable.Layout_spinner_list_item, componentContainer, false);
         }
-
-        textView.setText(spinnerTextFormatter.format(getItem(position)));
-        textView.setTextColor(textColor);
-
-        setTextHorizontalAlignment(textView);
-
-        return convertView;
+        onPrepareView(position, component);
+        return component;
     }
 
-    private void setTextHorizontalAlignment(TextView textView) {
+    void setCallback(NiceSpinnerAdapterWrapper.InternalListCallback callback) {
+        mCallback = callback;
+    }
+
+    private void onPrepareView(int index, Component component) {
+        Text title = (Text) component.findComponentById(ResourceTable.Id_tv_tinted_spinner);
+        try {
+            title.setBackground(ElementScatter.getInstance(context).parse(backgroundSelector));
+        } catch (Exception e){
+           //Exception
+        }
+        title.setTextSize(50);
+        title.setTextColor(textColor);
+        if (horizontalAlignment == PopUpTextAlignment.START) {
+            title.setTextAlignment(TextAlignment.START);
+        } else if(horizontalAlignment == PopUpTextAlignment.END) {
+            title.setTextAlignment(TextAlignment.END);
+        } else {
+            title.setTextAlignment(TextAlignment.CENTER);
+        }
+
+        if (spinnerTextFormatter != null) {
+            title.setText(spinnerTextFormatter.format(getItem(index)));
+        } else {
+            title.setText((String) getItem(index));
+        }
+        title.setPaddingBottom(popupBottomPadding);
+        component.setClickedListener(view -> {
+            onItemClicked(view, index);
+        });
+    }
+
+    private void onItemClicked(Component component, int index) {
+        if (mCallback != null) {
+            mCallback.onItemSelected(mDialog, component, index, null, false);
+        }
+    }
+
+    private void setTextHorizontalAlignment(Text textView) {
         switch (horizontalAlignment) {
             case START:
-                textView.setGravity(Gravity.START);
+                textView.setTextAlignment(TextAlignment.START);
                 break;
             case END:
-                textView.setGravity(Gravity.END);
+                textView.setTextAlignment(TextAlignment.END);
                 break;
             case CENTER:
-                textView.setGravity(Gravity.CENTER_HORIZONTAL);
+                textView.setTextAlignment(TextAlignment.HORIZONTAL_CENTER);
                 break;
         }
+    }
+
+    interface InternalListCallback {
+        boolean onItemSelected(PopupCustomDialog dialog, Component itemView, int position, CharSequence text, boolean longPress);
     }
 
     public int getSelectedIndex() {
@@ -109,10 +141,11 @@ public abstract class NiceSpinnerBaseAdapter<T> extends BaseAdapter {
     @Override
     public abstract int getCount();
 
-    static class ViewHolder {
-        TextView textView;
+    private static class ViewHolder {
 
-        ViewHolder(TextView textView) {
+        private Text textView;
+
+        private ViewHolder(Text textView) {
             this.textView = textView;
         }
     }

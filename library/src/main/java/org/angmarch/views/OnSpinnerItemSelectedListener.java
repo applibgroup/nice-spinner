@@ -1,7 +1,8 @@
 package org.angmarch.views;
 
-import android.view.View;
+import ohos.agp.components.Component;
+import ohos.agp.components.ComponentContainer;
 
 public interface OnSpinnerItemSelectedListener {
-    void onItemSelected(NiceSpinner parent, View view, int position, long id);
+    void onItemSelected(NiceSpinner parent, Component view, int position, CharSequence text);
 }

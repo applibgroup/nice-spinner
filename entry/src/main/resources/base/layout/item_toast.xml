@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<DependentLayout xmlns:ohos="http://schemas.huawei.com/res/ohos"
+    ohos:width="match_parent"
+    ohos:orientation="vertical"
+    ohos:height="match_content"
+    ohos:id="$+id:layout">
+
+    <DependentLayout
+        ohos:orientation="horizontal"
+        ohos:width="match_parent"
+        ohos:height="match_content"
+        ohos:id="$+id:background">
+
+        <Text
+            ohos:id="$+id:toast_text"
+            ohos:text="Hi My Name is Jeevan Deshmukh."
+            ohos:text_color="#FFFFFF"
+            ohos:left_margin="10vp"
+            ohos:width="match_content"
+            ohos:text_size="16vp"
+            ohos:multiple_lines="true"
+            ohos:left_padding="20vp"
+            ohos:height="match_content" />
+
+
+    </DependentLayout>
+
+</DependentLayout>

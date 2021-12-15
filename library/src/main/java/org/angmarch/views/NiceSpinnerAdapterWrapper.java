@@ -1,7 +1,7 @@
 package org.angmarch.views;
 
-import android.content.Context;
-import android.widget.ListAdapter;
+import ohos.agp.utils.Color;
+import ohos.app.Context;
 
 /*
  * Copyright (C) 2015 Angelo Marchesin.
@@ -20,29 +20,36 @@ import android.widget.ListAdapter;
  */
 public class NiceSpinnerAdapterWrapper extends NiceSpinnerBaseAdapter {
 
-    private final ListAdapter baseAdapter;
+    private PopupCustomDialog mDialog;
+    private InternalListCallback mCallback;
 
     NiceSpinnerAdapterWrapper(
+            PopupCustomDialog dialog,
             Context context,
-            ListAdapter toWrap,
-            int textColor,
+            Color textColor,
             int backgroundSelector,
             SpinnerTextFormatter spinnerTextFormatter,
-            PopUpTextAlignment horizontalAlignment
+            PopUpTextAlignment horizontalAlignment,
+            int popupBottomPadding
     ) {
-        super(context, textColor, backgroundSelector, spinnerTextFormatter, horizontalAlignment);
-        baseAdapter = toWrap;
+        super(dialog, context, textColor, backgroundSelector,  spinnerTextFormatter, horizontalAlignment, popupBottomPadding);
+        mDialog = dialog;
+    }
+
+    void setCallback(InternalListCallback callback) {
+        mCallback = callback;
+        super.setCallback(mCallback);
     }
 
     @Override public int getCount() {
-        return baseAdapter.getCount() - 1;
+        return mDialog.builder.items.size();
     }
 
     @Override public Object getItem(int position) {
-        return baseAdapter.getItem(position >= selectedIndex ? position + 1 : position);
+        return mDialog.builder.items.get(position);
     }
 
     @Override public Object getItemInDataset(int position) {
-        return baseAdapter.getItem(position);
+        return mDialog.builder.items.get(position);
     }
 }

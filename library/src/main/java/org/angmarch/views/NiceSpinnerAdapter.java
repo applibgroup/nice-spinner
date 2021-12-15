@@ -1,6 +1,8 @@
 package org.angmarch.views;
 
-import android.content.Context;
+
+import ohos.agp.utils.Color;
+import ohos.app.Context;
 
 import java.util.List;
 
@@ -24,14 +26,16 @@ public class NiceSpinnerAdapter<T> extends NiceSpinnerBaseAdapter {
     private final List<T> items;
 
     NiceSpinnerAdapter(
+            PopupCustomDialog dialog,
             Context context,
             List<T> items,
-            int textColor,
+            Color textColor,
             int backgroundSelector,
             SpinnerTextFormatter spinnerTextFormatter,
-            PopUpTextAlignment horizontalAlignment
+            PopUpTextAlignment horizontalAlignment,
+            int popUpBottomPadding
     ) {
-        super(context, textColor, backgroundSelector, spinnerTextFormatter, horizontalAlignment);
+        super(dialog,context, textColor, backgroundSelector, spinnerTextFormatter,  horizontalAlignment, popUpBottomPadding);
         this.items = items;
     }
 
