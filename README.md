@@ -6,6 +6,7 @@ It follows the material design guidelines, and it is compatible starting from Ap
 
 ![alt tag](nice-spinner.gif)
 
+
 ### Usage
 
 The usage is pretty straightforward. Add the tag into the XML layout:
