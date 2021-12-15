@@ -1,0 +1,12 @@
+{
+  "float": [
+    {
+      "name": "ms__padding_top",
+      "value": "12sp"
+    },
+    {
+      "name": "ms__padding_left",
+      "value": "24sp"
+    }
+  ]
+}

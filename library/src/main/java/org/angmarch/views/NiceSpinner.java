@@ -1,38 +1,20 @@
 package org.angmarch.views;
+import ohos.agp.colors.RgbColor;
+import ohos.agp.components.*;
+import ohos.agp.components.element.Element;
+import ohos.agp.components.element.ElementScatter;
+import ohos.agp.components.element.VectorElement;
+import ohos.agp.render.ColorMatrix;
+import ohos.agp.utils.Color;
+import ohos.agp.utils.TextAlignment;
+import ohos.agp.window.dialog.ToastDialog;
+import ohos.agp.window.service.Display;
+import ohos.agp.window.service.DisplayManager;
+import ohos.app.Context;
+import ohos.multimodalinput.event.TouchEvent;
 
-import android.animation.ObjectAnimator;
-import android.content.Context;
-import android.content.res.Resources;
-import android.content.res.TypedArray;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.os.Build;
-import android.os.Bundle;
-import android.os.Parcelable;
-import android.support.annotation.ColorRes;
-import android.support.annotation.DrawableRes;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.graphics.drawable.DrawableCompat;
-import android.support.v4.view.animation.LinearOutSlowInInterpolator;
-import android.support.v7.widget.AppCompatTextView;
-import android.util.AttributeSet;
-import android.util.TypedValue;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ListAdapter;
-import android.widget.PopupWindow;
-
-
-import android.widget.ListPopupWindow;
-import android.widget.ListView;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 
 /*
@@ -50,7 +32,7 @@ import java.util.List;
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-public class NiceSpinner extends AppCompatTextView {
+public class NiceSpinner<T> extends Text implements Component.TouchEventListener {
 
     private static final int MAX_LEVEL = 10000;
     private static final int VERTICAL_OFFSET = 1;
@@ -61,158 +43,93 @@ public class NiceSpinner extends AppCompatTextView {
     private static final String ARROW_DRAWABLE_RES_ID = "arrow_drawable_res_id";
 
     private int selectedIndex;
-    private Drawable arrowDrawable;
-    private ListPopupWindow popupWindow;
+    private VectorElement arrowDrawable;
     private NiceSpinnerBaseAdapter adapter;
 
-    private AdapterView.OnItemClickListener onItemClickListener;
-    private AdapterView.OnItemSelectedListener onItemSelectedListener;
     private OnSpinnerItemSelectedListener onSpinnerItemSelectedListener;
+    private List<T> items;
 
     private boolean isArrowHidden;
-    private int textColor;
+    private Color textColor;
     private int backgroundSelector;
-    private int arrowDrawableTint;
+    private String arrowDrawableTint;
     private int displayHeight;
     private int parentVerticalOffset;
     private int dropDownListPaddingBottom;
-    private @DrawableRes
-    int arrowDrawableResId;
+    Element arrowDrawableResId;
     private SpinnerTextFormatter spinnerTextFormatter = new SimpleSpinnerTextFormatter();
     private SpinnerTextFormatter selectedTextFormatter = new SimpleSpinnerTextFormatter();
     private PopUpTextAlignment horizontalAlignment;
-
-    @Nullable
-    private ObjectAnimator arrowAnimator = null;
+    private Context context ;
+    private String backgroundColor;
+    private ToastDialog toastDialog;
+    private int popupTextAlignmentvalue;
 
     public NiceSpinner(Context context) {
         super(context);
+        this.context = context;
         init(context, null);
     }
 
-    public NiceSpinner(Context context, AttributeSet attrs) {
+    public NiceSpinner(Context context, AttrSet attrs) {
         super(context, attrs);
         init(context, attrs);
     }
 
-    public NiceSpinner(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
+    public NiceSpinner(Context context, AttrSet attrs, int defStyleAttr) {
+        super(context, attrs,"");
         init(context, attrs);
     }
 
-    @Override
-    public Parcelable onSaveInstanceState() {
-        Bundle bundle = new Bundle();
-        bundle.putParcelable(INSTANCE_STATE, super.onSaveInstanceState());
-        bundle.putInt(SELECTED_INDEX, selectedIndex);
-        bundle.putBoolean(IS_ARROW_HIDDEN, isArrowHidden);
-        bundle.putInt(ARROW_DRAWABLE_RES_ID, arrowDrawableResId);
-        if (popupWindow != null) {
-            bundle.putBoolean(IS_POPUP_SHOWING, popupWindow.isShowing());
-        }
-        return bundle;
-    }
 
-    @Override
-    public void onRestoreInstanceState(Parcelable savedState) {
-        if (savedState instanceof Bundle) {
-            Bundle bundle = (Bundle) savedState;
-            selectedIndex = bundle.getInt(SELECTED_INDEX);
-            if (adapter != null) {
-                setTextInternal(selectedTextFormatter.format(adapter.getItemInDataset(selectedIndex)).toString());
-                adapter.setSelectedIndex(selectedIndex);
-            }
+    private void init(Context context, AttrSet attrs) {
+        int defaultPadding = 12;
 
-            if (bundle.getBoolean(IS_POPUP_SHOWING)) {
-                if (popupWindow != null) {
-                    // Post the show request into the looper to avoid bad token exception
-                    post(this::showDropDown);
-                }
-            }
-            isArrowHidden = bundle.getBoolean(IS_ARROW_HIDDEN, false);
-            arrowDrawableResId = bundle.getInt(ARROW_DRAWABLE_RES_ID);
-            savedState = bundle.getParcelable(INSTANCE_STATE);
-        }
-        super.onRestoreInstanceState(savedState);
-    }
-
-    private void init(Context context, AttributeSet attrs) {
-        Resources resources = getResources();
-        TypedArray typedArray = context.obtainStyledAttributes(attrs, R.styleable.NiceSpinner);
-        int defaultPadding = resources.getDimensionPixelSize(R.dimen.one_and_a_half_grid_unit);
-
-        setGravity(Gravity.CENTER_VERTICAL | Gravity.START);
-        setPadding(resources.getDimensionPixelSize(R.dimen.three_grid_unit), defaultPadding, defaultPadding,
+        this.setTextAlignment(TextAlignment.VERTICAL_CENTER);
+        setPadding(24, defaultPadding, defaultPadding,
                 defaultPadding);
         setClickable(true);
-        backgroundSelector = typedArray.getResourceId(R.styleable.NiceSpinner_backgroundSelector, R.drawable.selector);
-        setBackgroundResource(backgroundSelector);
-        textColor = typedArray.getColor(R.styleable.NiceSpinner_textTint, getDefaultTextColor(context));
+        backgroundSelector = ResourceTable.Graphic_selectdialog;
+        setBackground(ElementScatter.getInstance(context).parse(backgroundSelector));
+        textColor = getDefaultTextColor(context);
         setTextColor(textColor);
-        popupWindow = new ListPopupWindow(context);
-        popupWindow.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                // The selected item is not displayed within the list, so when the selected position is equal to
-                // the one of the currently selected item it gets shifted to the next item.
-                if (position >= selectedIndex && position < adapter.getCount()) {
-                    position++;
-                }
-                selectedIndex = position;
-
-                if (onSpinnerItemSelectedListener != null) {
-                    onSpinnerItemSelectedListener.onItemSelected(NiceSpinner.this, view, position, id);
-                }
-
-                if (onItemClickListener != null) {
-                    onItemClickListener.onItemClick(parent, view, position, id);
-                }
-
-                if (onItemSelectedListener != null) {
-                    onItemSelectedListener.onItemSelected(parent, view, position, id);
-                }
-
-                adapter.setSelectedIndex(position);
-
-                setTextInternal(adapter.getItemInDataset(position));
-
-                dismissDropDown();
-            }
-        });
-
-        popupWindow.setModal(true);
-
-        popupWindow.setOnDismissListener(new PopupWindow.OnDismissListener() {
-            @Override
-            public void onDismiss() {
-                if (!isArrowHidden) {
-                    animateArrow(false);
-                }
-            }
-        });
-
-        isArrowHidden = typedArray.getBoolean(R.styleable.NiceSpinner_hideArrow, false);
-        arrowDrawableTint = typedArray.getColor(R.styleable.NiceSpinner_arrowTint, getResources().getColor(android.R.color.black));
-        arrowDrawableResId = typedArray.getResourceId(R.styleable.NiceSpinner_arrowDrawable, R.drawable.arrow);
-        dropDownListPaddingBottom =
-                typedArray.getDimensionPixelSize(R.styleable.NiceSpinner_dropDownListPaddingBottom, 0);
-        horizontalAlignment = PopUpTextAlignment.fromId(
-                typedArray.getInt(R.styleable.NiceSpinner_popupTextAlignment, PopUpTextAlignment.CENTER.ordinal())
-        );
-
-        CharSequence[] entries = typedArray.getTextArray(R.styleable.NiceSpinner_entries);
-        if (entries != null) {
-            attachDataSource(Arrays.asList(entries));
+        if (attrs != null) {
+            textColor = attrs.getAttr("textTint").isPresent() ?
+                    attrs.getAttr("textTint").get().getColorValue() : Color.BLACK;
+            setTextColor(textColor);
+            arrowDrawableTint = attrs.getAttr("arrowTint").isPresent() ?
+                    attrs.getAttr("arrowTint").get().getStringValue() : "#000000";
+            isArrowHidden = attrs.getAttr("hideArrow").isPresent() ?
+                    attrs.getAttr("hideArrow").get().getBoolValue() : false;
+            arrowDrawableResId = attrs.getAttr("arrowDrawable").isPresent() ?
+                    attrs.getAttr("arrowDrawable").get().getElement() : new VectorElement(mContext, ResourceTable.Media_ic_arrow_drop_down_black_24);
+            dropDownListPaddingBottom = attrs.getAttr("dropDownListPaddingBottom").isPresent() ?
+                    attrs.getAttr("dropDownListPaddingBottom").get().getDimensionValue() : 12;
+            backgroundColor = attrs.getAttr("background_color").isPresent() ?
+                    attrs.getAttr("background_color").get().getStringValue() : "#f2f2f2";
+            popupTextAlignmentvalue = attrs.getAttr("popupTextAlignment").isPresent()?
+                    attrs.getAttr("popupTextAlignment").get().getIntegerValue(): 0;
+            popupTextAlignment(popupTextAlignmentvalue);
         }
 
-        typedArray.recycle();
+        setTouchEventListener(this);
+        initComponent();
+    }
 
-        measureDisplayHeight();
+    private void popupTextAlignment(int popupTextAlignmentvalue){
+        if (popupTextAlignmentvalue == 2) {
+            horizontalAlignment =  PopUpTextAlignment.CENTER;
+        } else if (popupTextAlignmentvalue == 1) {
+            horizontalAlignment =  PopUpTextAlignment.END;
+        } else {
+            horizontalAlignment = PopUpTextAlignment.START;
+        }
 
     }
 
     private void measureDisplayHeight() {
-        displayHeight = getContext().getResources().getDisplayMetrics().heightPixels;
+        Optional<Display> optionalDisplay = DisplayManager.getInstance().getDefaultDisplay(context);
+        displayHeight = optionalDisplay.get().getAttributes().height;
     }
 
     private int getParentVerticalOffset() {
@@ -220,63 +137,11 @@ public class NiceSpinner extends AppCompatTextView {
             return parentVerticalOffset;
         }
         int[] locationOnScreen = new int[2];
-        getLocationOnScreen(locationOnScreen);
         return parentVerticalOffset = locationOnScreen[VERTICAL_OFFSET];
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        if (arrowAnimator != null) {
-            arrowAnimator.cancel();
-        }
-        super.onDetachedFromWindow();
-    }
-
-    @Override
-    protected void onAttachedToWindow() {
-        super.onAttachedToWindow();
-        if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.KITKAT) {
-            onVisibilityChanged(this, getVisibility());
-        }
-    }
-
-    @Override
-    protected void onVisibilityChanged(View changedView, int visibility) {
-        super.onVisibilityChanged(changedView, visibility);
-        arrowDrawable = initArrowDrawable(arrowDrawableTint);
-        setArrowDrawableOrHide(arrowDrawable);
-    }
-
-    private Drawable initArrowDrawable(int drawableTint) {
-        if (arrowDrawableResId == 0) return null;
-        Drawable drawable = ContextCompat.getDrawable(getContext(), arrowDrawableResId);
-        if (drawable != null) {
-            // Gets a copy of this drawable as this is going to be mutated by the animator
-            drawable = DrawableCompat.wrap(drawable).mutate();
-            if (drawableTint != Integer.MAX_VALUE && drawableTint != 0) {
-                DrawableCompat.setTint(drawable, drawableTint);
-            }
-        }
-        return drawable;
-    }
-
-    private void setArrowDrawableOrHide(Drawable drawable) {
-        if (!isArrowHidden && drawable != null) {
-            setCompoundDrawablesWithIntrinsicBounds(null, null, drawable, null);
-        } else {
-            setCompoundDrawablesWithIntrinsicBounds(null, null, null, null);
-        }
-    }
-
-    private int getDefaultTextColor(Context context) {
-        TypedValue typedValue = new TypedValue();
-        context.getTheme()
-                .resolveAttribute(android.R.attr.textColorPrimary, typedValue, true);
-        TypedArray typedArray = context.obtainStyledAttributes(typedValue.data,
-                new int[]{android.R.attr.textColorPrimary});
-        int defaultTextColor = typedArray.getColor(0, Color.BLACK);
-        typedArray.recycle();
-        return defaultTextColor;
+    private Color getDefaultTextColor(Context context) {
+        return Color.BLACK;
     }
 
     public Object getItemAtPosition(int position) {
@@ -291,25 +156,6 @@ public class NiceSpinner extends AppCompatTextView {
         return selectedIndex;
     }
 
-    public void setArrowDrawable(@DrawableRes @ColorRes int drawableId) {
-        arrowDrawableResId = drawableId;
-        arrowDrawable = initArrowDrawable(R.drawable.arrow);
-        setArrowDrawableOrHide(arrowDrawable);
-    }
-
-    public void setArrowDrawable(Drawable drawable) {
-        arrowDrawable = drawable;
-        setArrowDrawableOrHide(arrowDrawable);
-    }
-
-    private void setTextInternal(Object item) {
-        if (selectedTextFormatter != null) {
-            setText(selectedTextFormatter.format(item));
-        } else {
-            setText(item.toString());
-        }
-    }
-
     /**
      * Set the default spinner item using its index
      *
@@ -320,97 +166,19 @@ public class NiceSpinner extends AppCompatTextView {
             if (position >= 0 && position <= adapter.getCount()) {
                 adapter.setSelectedIndex(position);
                 selectedIndex = position;
-                setTextInternal(selectedTextFormatter.format(adapter.getItemInDataset(position)).toString());
             } else {
                 throw new IllegalArgumentException("Position must be lower than adapter count!");
             }
         }
     }
 
-
-
-    /**
-     * @deprecated use setOnSpinnerItemSelectedListener instead.
-     */
-    @Deprecated
-    public void addOnItemClickListener(AdapterView.OnItemClickListener onItemClickListener) {
-        this.onItemClickListener = onItemClickListener;
+    public void setSpinnerTextFormatter(SpinnerTextFormatter spinnerTextFormatter) {
+        this.spinnerTextFormatter = spinnerTextFormatter;
     }
 
-    /**
-     * @deprecated use setOnSpinnerItemSelectedListener instead.
-     */
-    @Deprecated
-    public void setOnItemSelectedListener(AdapterView.OnItemSelectedListener onItemSelectedListener) {
-        this.onItemSelectedListener = onItemSelectedListener;
+    public void setSelectedTextFormatter(SpinnerTextFormatter textFormatter) {
+        this.selectedTextFormatter = textFormatter;
     }
-
-    public <T> void attachDataSource(@NonNull List<T> list) {
-        adapter = new NiceSpinnerAdapter<>(getContext(), list, textColor, backgroundSelector, spinnerTextFormatter, horizontalAlignment);
-        setAdapterInternal(adapter);
-    }
-
-    public void setAdapter(ListAdapter adapter) {
-        this.adapter = new NiceSpinnerAdapterWrapper(getContext(), adapter, textColor, backgroundSelector,
-                spinnerTextFormatter, horizontalAlignment);
-        setAdapterInternal(this.adapter);
-    }
-
-    public PopUpTextAlignment getPopUpTextAlignment() {
-        return horizontalAlignment;
-    }
-
-    private <T> void setAdapterInternal(NiceSpinnerBaseAdapter<T> adapter) {
-        if (adapter.getCount() >= 0) {
-            // If the adapter needs to be set again, ensure to reset the selected index as well
-            selectedIndex = 0;
-            popupWindow.setAdapter(adapter);
-            setTextInternal(adapter.getItemInDataset(selectedIndex));
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (isEnabled() && event.getAction() == MotionEvent.ACTION_UP) {
-            if (!popupWindow.isShowing() && adapter.getCount() > 0) {
-                showDropDown();
-            } else {
-                dismissDropDown();
-            }
-        }
-        return super.onTouchEvent(event);
-    }
-
-    private void animateArrow(boolean shouldRotateUp) {
-        int start = shouldRotateUp ? 0 : MAX_LEVEL;
-        int end = shouldRotateUp ? MAX_LEVEL : 0;
-        arrowAnimator = ObjectAnimator.ofInt(arrowDrawable, "level", start, end);
-        arrowAnimator.setInterpolator(new LinearOutSlowInInterpolator());
-        arrowAnimator.start();
-    }
-
-    public void dismissDropDown() {
-        if (!isArrowHidden) {
-            animateArrow(false);
-        }
-        popupWindow.dismiss();
-    }
-
-    public void showDropDown() {
-        if (!isArrowHidden) {
-            animateArrow(true);
-        }
-        popupWindow.setAnchorView(this);
-        popupWindow.show();
-        final ListView listView = popupWindow.getListView();
-        if(listView != null) {
-            listView.setVerticalScrollBarEnabled(false);
-            listView.setHorizontalScrollBarEnabled(false);
-            listView.setVerticalFadingEdgeEnabled(false);
-            listView.setHorizontalFadingEdgeEnabled(false);
-        }
-    }
-
 
     private int getPopUpHeight() {
         return Math.max(verticalSpaceBelow(), verticalSpaceAbove());
@@ -421,19 +189,7 @@ public class NiceSpinner extends AppCompatTextView {
     }
 
     private int verticalSpaceBelow() {
-        return displayHeight - getParentVerticalOffset() - getMeasuredHeight();
-    }
-
-    public void setTintColor(@ColorRes int resId) {
-        if (arrowDrawable != null && !isArrowHidden) {
-            DrawableCompat.setTint(arrowDrawable, ContextCompat.getColor(getContext(), resId));
-        }
-    }
-
-    public void setArrowTintColor(int resolvedColor) {
-        if (arrowDrawable != null && !isArrowHidden) {
-            DrawableCompat.setTint(arrowDrawable, resolvedColor);
-        }
+        return displayHeight - getParentVerticalOffset() - getEstimatedHeight();
     }
 
     public void hideArrow() {
@@ -452,48 +208,203 @@ public class NiceSpinner extends AppCompatTextView {
 
     public void setDropDownListPaddingBottom(int paddingBottom) {
         dropDownListPaddingBottom = paddingBottom;
+        initArrowDrawable();
     }
 
     public int getDropDownListPaddingBottom() {
         return dropDownListPaddingBottom;
     }
 
-    public void setSpinnerTextFormatter(SpinnerTextFormatter spinnerTextFormatter) {
-        this.spinnerTextFormatter = spinnerTextFormatter;
+    private void initComponent() {
+        setTextAlignment(TextAlignment.VERTICAL_CENTER);
+        setTextColor(textColor);
+        this.setTextSize(50);
+      //  setBackground(ElementScatter.getInstance(context).parse(backgroundSelector));
+        initArrowDrawable();
     }
 
-    public void setSelectedTextFormatter(SpinnerTextFormatter textFormatter) {
-        this.selectedTextFormatter = textFormatter;
-    }
+    private void initArrowDrawable() {
+        try {
+            VectorElement vectorElement = new VectorElement(mContext, ResourceTable.Media_ic_arrow_drop_down_black_24);
+            ColorMatrix colorMatrix = new ColorMatrix();
+            colorMatrix.setScale(HexToColor(arrowDrawableTint).getRed(),
+                    HexToColor(arrowDrawableTint).getGreen(),
+                    HexToColor(arrowDrawableTint).getBlue(), HexToColor(arrowDrawableTint).getAlpha());
+            vectorElement.setColorMatrix(colorMatrix);
+            setArrowDrawableOrHide(vectorElement);
 
-
-    public void performItemClick( int position,boolean showDropdown) {
-        if(showDropdown) showDropDown();
-        setSelectedIndex(position);
-    }
-
-    /**
-     * only applicable when popup is shown .
-     * @param view
-     * @param position
-     * @param id
-     */
-    public void performItemClick(View view, int position, int id) {
-        showDropDown();
-        final ListView listView = popupWindow.getListView();
-        if(listView != null) {
-            listView.performItemClick(view, position, id);
+        } catch (Exception e) {
+           //Exception
         }
     }
 
-    public OnSpinnerItemSelectedListener getOnSpinnerItemSelectedListener() {
-        return onSpinnerItemSelectedListener;
+    public static RgbColor HexToColor(String hex)
+    {
+        hex = hex.replace("#", "");
+        switch (hex.length()) {
+            case 6:
+                return new RgbColor(
+                        Integer.valueOf(hex.substring(0, 2), 16),
+                        Integer.valueOf(hex.substring(2, 4), 16),
+                        Integer.valueOf(hex.substring(4, 6), 16));
+            case 8:
+                return new RgbColor(
+                        Integer.valueOf(hex.substring(0, 2), 16),
+                        Integer.valueOf(hex.substring(2, 4), 16),
+                        Integer.valueOf(hex.substring(4, 6), 16),
+                        Integer.valueOf(hex.substring(6, 8), 16));
+            default:
+                return new RgbColor(255,255,255,255);
+        }
+    }
+
+    private void setArrowDrawableOrHide(VectorElement vectorElement) {
+        if (isArrowHidden) {
+            setAroundElements(null, null, null, null);
+        } else {
+            setAroundElements(null, null, vectorElement, null);
+        }
+    }
+
+
+    @Override
+    public boolean onTouchEvent(Component component, TouchEvent event) {
+        if (event.getAction() == TouchEvent.PRIMARY_POINT_UP) {
+            if (isEnabled() && isClickable()) {
+                showDropDown();
+            }
+        }
+        return true;
+    }
+
+    /**
+     * Set the dropdown items
+     *
+     * @param items A list of items
+     */
+    public void setItems(List<T> items) {
+        if (selectedTextFormatter != null) {
+            this.setText(selectedTextFormatter.format(items.get(0)));
+        } else {
+            this.setText((String) items.get(0));
+        }
+        this.items = items;
+    }
+
+    public void setTextCustomColor(Color textColor) {
+        this.textColor = textColor;
+        initComponent();
+    }
+
+    public void setHideArrow(boolean hideArrow) {
+        this.isArrowHidden = hideArrow;
+        initComponent();
+    }
+
+    public boolean getHideArrow() {
+        return isArrowHidden;
+    }
+
+    public void setBackgroundColor(String backgroundColor) {
+        this.backgroundColor = backgroundColor;
+        initComponent();
+    }
+
+    public String getBackgroundColor() {
+        return backgroundColor;
+    }
+
+    public void setBackgroundSelector(int backgroundSelector) {
+        this.backgroundSelector = backgroundSelector;
+        initComponent();
+    }
+
+    /**
+     * Show the dropdown menu
+     */
+    public void showDropDown() {
+        VectorElement vectorElement = null;
+        try {
+            vectorElement = new VectorElement(mContext, ResourceTable.Media_ic_arrow_drop_up_black_24);
+            ColorMatrix colorMatrix = new ColorMatrix();
+            colorMatrix.setScale(HexToColor(arrowDrawableTint).getRed(),
+                    HexToColor(arrowDrawableTint).getGreen(),
+                    HexToColor(arrowDrawableTint).getBlue(), HexToColor(arrowDrawableTint).getAlpha());
+            vectorElement.setColorMatrix(colorMatrix);
+        } catch (Exception e) {
+           //Exception
+        }
+        if (isArrowHidden) {
+            setAroundElements(null, null, null, null);
+        } else {
+            setAroundElements(null, null, vectorElement, null);
+        }
+
+
+        new PopupCustomDialog.Builder(mContext)
+                .items(items)
+                .setSpinnerTextFormat(spinnerTextFormatter)
+                .setPopupPaddingBottom(dropDownListPaddingBottom)
+                .setCustomTextColor(textColor)
+                .setBackgroundColor(backgroundColor)
+                .setBackgroundSelecorColor(backgroundSelector)
+                .setTextAlignment(horizontalAlignment)
+                .itemsCallback(new PopupCustomDialog.ListCallback() {
+                    @Override
+                    public void onSelection(PopupCustomDialog dialog, Component view, int which, CharSequence text) {
+                        setTextToSpinner(text.toString());
+                        if (onSpinnerItemSelectedListener != null) {
+                            onSpinnerItemSelectedListener.onItemSelected(NiceSpinner.this,view, which, text.toString());
+                        }
+                        dismissDropDown();
+                    }
+                })
+                .show(this);
     }
 
     public void setOnSpinnerItemSelectedListener(OnSpinnerItemSelectedListener onSpinnerItemSelectedListener) {
         this.onSpinnerItemSelectedListener = onSpinnerItemSelectedListener;
     }
 
+    public interface OnItemSelectedListener<T> {
+
+        /**
+         * <p>Callback method to be invoked when an item in this view has been selected. This callback is invoked only when
+         * the newly selected position is different from the previously selected position or if there was no selected
+         * item.</p>
+         *
+         * @param view     The {@link NiceSpinner} view
+         * @param position The position of the view in the adapter
+         * @param text     The row text of the item that is selected
+         */
+        void onItemSelected(NiceSpinner view, int position, String text);
+    }
+
+    /**
+     * Closes the dropdown menu
+     */
+    public void dismissDropDown() {
+        VectorElement vectorElement = null;
+        try {
+            vectorElement = new VectorElement(mContext, ResourceTable.Media_ic_arrow_drop_down_black_24);
+            ColorMatrix colorMatrix = new ColorMatrix();
+            colorMatrix.setScale(HexToColor(arrowDrawableTint).getRed(),
+                    HexToColor(arrowDrawableTint).getGreen(),
+                    HexToColor(arrowDrawableTint).getBlue(), HexToColor(arrowDrawableTint).getAlpha());
+            vectorElement.setColorMatrix(colorMatrix);
+        } catch (Exception e) {
+           //Exception
+        }
+        if (isArrowHidden) {
+            setAroundElements(null, null, null, null);
+        } else {
+            setAroundElements(null, null, vectorElement, null);
+        }
+    }
+
+    private void setTextToSpinner(String message) {
+        this.setText(message);
+    }
 
 }
 

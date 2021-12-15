@@ -1,28 +1,39 @@
-# Nice Spinner [![](https://jitpack.io/v/arcadefire/nice-spinner.svg)](https://jitpack.io/#arcadefire/nice-spinner) [![Android Arsenal](https://img.shields.io/badge/Android%20Arsenal-Nice%20Spinner-blue.svg?style=flat)](https://android-arsenal.com/details/1/2225)
+[![Build](https://github.com/applibgroup/nice-spinner/actions/workflows/main.yml/badge.svg)](https://github.com/applibgroup/nice-spinner/actions/workflows/main.yml)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=applibgroup_nice-spinner&metric=alert_status)](https://sonarcloud.io/dashboard?id=applibgroup_nice-spinner)
 
-NiceSpinner is a re-implementation of the default Android's spinner, with a nice arrow animation and a different way to display its content.
+# Nice Spinner 
 
-It follows the material design guidelines, and it is compatible starting from Api 14.
+## Introduction:
+NiceSpinner is a nice arrow based spinner which has different way to display its content.
 
-![alt tag](nice-spinner.gif)
+# Source
+This library has been inspired by [arcadefire\\nice-spinner](https://github.com/arcadefire/nice-spinner).
 
-### Usage
+
+## Usage
 
 The usage is pretty straightforward. Add the tag into the XML layout:
 ```xml
- <org.angmarch.views.NiceSpinner
-   android:id="@+id/nice_spinner"
-   android:layout_width="wrap_content"
-   android:layout_height="wrap_content"
-   android:layout_margin="16dp"/>
+<org.angmarch.views.NiceSpinner
+        ohos:id="$+id:nice_spinner"
+        ohos:width="match_parent"
+        ohos:height="match_content"
+        ohos:left_margin="16vp"
+        ohos:top_margin="8vp"
+        ohos:right_margin="16vp"
+        ohos:background_color="#f2f2f2"
+        ohos:dropDownListPaddingBottom="40"
+        ohos:popupTextAlignment="0"
+        ohos:arrowTint="#000000"
+      />
 ```
-* Note: change `layout_width` to at least the width of the largest item on the list to prevent resizing
 
  Then use this snippet to populate it with contents:
 ```java
- NiceSpinner niceSpinner = (NiceSpinner) findViewById(R.id.nice_spinner);
- List<String> dataset = new LinkedList<>(Arrays.asList("One", "Two", "Three", "Four", "Five"));
- niceSpinner.attachDataSource(dataset);
+ NiceSpinner nspinner = (NiceSpinner) findComponentById(ResourceTable.Id_nice_spinner);
+ List<String> dataset = new LinkedList<String>(Arrays.asList("One", "Two", "Three", "Four", "Five"));
+ spinner.setItems(dataset);
+                      
 ```
 
 #### Listeners
@@ -30,13 +41,17 @@ For listening to the item selection actions, you can just use the following snip
 ```java
 spinner.setOnSpinnerItemSelectedListener(new OnSpinnerItemSelectedListener() {
     @Override
-    public void onItemSelected(NiceSpinner parent, View view, int position, long id) {
-        // This example uses String, but your type can be any
-        String item = parent.getItemAtPosition(position);
-        ...
+    public void onItemSelected(NiceSpinner parent, Component view, int position, CharSequence text) {
+        showToast("Clicked: " + text);
     }
-});
+ });
 ```
+
+### setBackgroundSelector
+To set the background selector need to define selector xml in graphics and set it to the setBackgroundSelector
+spinner.setBackgroundSelector(ResourceTable.Graphic_selectdialog_changecolor);
+
+Note: xml based array is not supported.
 
 #### Attributes
 You can add attributes to customize the view. Available attributes:
@@ -44,50 +59,29 @@ You can add attributes to customize the view. Available attributes:
 | name                      | type      | info                                                   |
 |------------------------   |-----------|--------------------------------------------------------|
 | arrowTint                 | color     | sets the color on the drop-down arrow                  |
-| hideArrow                 | boolean   | set whether show or hide the drop-down arrow           |
-| arrowDrawable             | reference | set the drawable of the drop-down arrow                |
+| hideArrow                 | boolean   | set whether show or hide the drop-down arrow           |                |
 | textTint                  | color     | set the text color                                     |
 | dropDownListPaddingBottom | dimension | set the bottom padding of the drop-down list           |
-| backgroundSelector        | integer   | set the background selector for the drop-down list rows |
 | popupTextAlignment        | enum      | set the horizontal alignment of the default popup text |
-| entries                   | reference | set the data source from an array of strings |
 
-How to include
----
+## Installation instructions:
 
-With gradle: edit your `build.gradle`:
-```groovy
-allprojects {
-    repositories {
-        ...
-        maven { url "https://jitpack.io" }
+```
+Method 1:
+    Generate the .har package through the library and add the .har package to the libs folder.
+    Add the following code to the entry gradle:
+        implementation fileTree  (dir: 'libs', include: ['*.jar', '*.har'])
+
+Method 2:
+    allprojects{
+        repositories{
+            mavenCentral()
+        }
     }
-}
-
-dependencies {
-    implementation 'com.github.arcadefire:nice-spinner:1.4.4'
-}
+implementation 'dev.applibgroup:nicespinner:1.0.0'
 ```
+## License
 
-Or declare it into your `pom.xml`:
-
-```xml
-<repositories>
-    <repository>
-        <id>jitpack.io</id>
-        <url>https://jitpack.io</url>
-    </repository>
-</repositories>
-
-<dependency>
-    <groupId>com.github.arcadefire</groupId>
-    <artifactId>nice-spinner</artifactId>
-    <version>1.4.4</version>
-</dependency>
-```
-
-License
--------
     Copyright (C) 2015 Angelo Marchesin.
     
     Licensed under the Apache License, Version 2.0 (the "License");

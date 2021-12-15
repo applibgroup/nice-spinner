@@ -1,0 +1,12 @@
+{
+  "color": [
+    {
+      "name":"md_btn_selected_dark",
+      "value":"#808080"
+    },
+    {
+      "name": "white",
+      "value": "#ffffff"
+    }
+  ]
+}

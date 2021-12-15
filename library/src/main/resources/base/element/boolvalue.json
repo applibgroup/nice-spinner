@@ -1,0 +1,16 @@
+{
+  "boolean": [
+    {
+      "name": "md_icon_limit_icon_to_default_size",
+      "value": false
+    },
+    {
+      "name": "textAllCaps",
+      "value": true
+    },
+    {
+      "name": "md_reduce_padding_no_title_no_buttons",
+      "value": false
+    }
+  ]
+}
