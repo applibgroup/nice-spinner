@@ -61,8 +61,10 @@ public class PopupCustomDialog extends PopupDialog implements Component.ClickedL
                         Integer.valueOf(hex.substring(2, 4), 16),
                         Integer.valueOf(hex.substring(4, 6), 16),
                         Integer.valueOf(hex.substring(6, 8), 16));
+            default:
+                return null;
         }
-        return null;
+
     }
 
     private void prepareDialogView(ComponentContainer rootLayout, Builder builder) {

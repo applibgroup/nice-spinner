@@ -63,6 +63,7 @@ public class NiceSpinner<T> extends Text implements Component.TouchEventListener
     private Context context ;
     private String backgroundColor;
     private ToastDialog toastDialog;
+    private int popupTextAlignmentvalue;
 
     public NiceSpinner(Context context) {
         super(context);
@@ -106,19 +107,24 @@ public class NiceSpinner<T> extends Text implements Component.TouchEventListener
                     attrs.getAttr("dropDownListPaddingBottom").get().getDimensionValue() : 12;
             backgroundColor = attrs.getAttr("background_color").isPresent() ?
                     attrs.getAttr("background_color").get().getStringValue() : "#f2f2f2";
-            if (attrs.getAttr("popupTextAlignment").isPresent()) {
-                if (attrs.getAttr("popupTextAlignment").get().getIntegerValue() == 2) {
-                    horizontalAlignment =  PopUpTextAlignment.CENTER;
-                } else if (attrs.getAttr("popupTextAlignment").get().getIntegerValue() == 1) {
-                    horizontalAlignment =  PopUpTextAlignment.END;
-                } else {
-                    horizontalAlignment = PopUpTextAlignment.START;
-                }
-            }
+            popupTextAlignmentvalue = attrs.getAttr("popupTextAlignment").isPresent()?
+                    attrs.getAttr("popupTextAlignment").get().getIntegerValue(): 0;
+            popupTextAlignment(popupTextAlignmentvalue);
         }
 
         setTouchEventListener(this);
         initComponent();
+    }
+
+    private void popupTextAlignment(int popupTextAlignmentvalue){
+        if (popupTextAlignmentvalue == 2) {
+            horizontalAlignment =  PopUpTextAlignment.CENTER;
+        } else if (popupTextAlignmentvalue == 1) {
+            horizontalAlignment =  PopUpTextAlignment.END;
+        } else {
+            horizontalAlignment = PopUpTextAlignment.START;
+        }
+
     }
 
     private void measureDisplayHeight() {
@@ -247,8 +253,9 @@ public class NiceSpinner<T> extends Text implements Component.TouchEventListener
                         Integer.valueOf(hex.substring(2, 4), 16),
                         Integer.valueOf(hex.substring(4, 6), 16),
                         Integer.valueOf(hex.substring(6, 8), 16));
+            default:
+                return null;
         }
-        return null;
     }
 
     private void setArrowDrawableOrHide(VectorElement vectorElement) {
