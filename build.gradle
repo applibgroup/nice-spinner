@@ -64,7 +64,6 @@ sonarqube {
         property "sonar.projectKey", "applibgroup_nice-spinner"
         property "sonar.organization", "applibgroup"
         property "sonar.host.url", "https://sonarcloud.io"
-        property "sonar.host.url", "http://localhost:9000/"
         property "sonar.sources", "entry,library"
         property "sonar.java.binaries", "entry/build,library/build"
         property "sonar.java.checkstyle.reportPaths", "build/reports/checkstyle/checkstyle.xml"
